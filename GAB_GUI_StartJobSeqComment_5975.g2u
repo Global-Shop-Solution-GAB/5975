@@ -1,0 +1,198 @@
+Program.Sub.ScreenSU.Start
+Gui.F_Main..create
+Gui.F_Main..caption("Sequence Comments")
+Gui.F_Main..size(6030,6150)
+Gui.F_Main..minx(0)
+Gui.F_Main..miny(0)
+Gui.F_Main..position(0,0)
+Gui.F_Main..event(UnLoad,f_main_unload)
+Gui.F_Main..fontsize(11)
+Gui.F_Main..forecolor(0)
+Gui.F_Main..fontstyle(False,False,False,False)
+Gui.F_Main..BackColor(-2147483633)
+Gui.F_Main..maxbutton(False)
+Gui.F_Main..minbutton(False)
+Gui.F_Main..mousepointer(0)
+Gui.F_Main.txtComments.create(textboxm)
+Gui.F_Main.txtComments.size(5640,4470)
+Gui.F_Main.txtComments.position(65,1110)
+Gui.F_Main.txtComments.fontsize(12)
+Gui.F_Main.txtComments.defaultvalue("")
+Gui.F_Main.lblComments.create(label,"Additional Comments:",True,2400,255,1,110,845,True,0,Arial,12,-2147483633,0)
+Gui.F_Main.lblComments.defaultvalue("")
+Gui.F_Main.lblJob.create(label,"Job:",True,825,255,1,200,110,True,0,Arial,12,-2147483633,0)
+Gui.F_Main.lblJob.defaultvalue("")
+Gui.F_Main.txtJob.create(textbox,"",True,1020,390,0,195,405,False,0,Arial,12,-2147483643,1)
+Gui.F_Main.txtJob.defaultvalue("")
+Gui.F_Main.lblSfx.create(label,"Suffix:",True,750,255,1,1335,105,True,0,Arial,12,-2147483633,0)
+Gui.F_Main.lblSfx.defaultvalue("")
+Gui.F_Main.txtSfx.create(textbox,"",True,705,390,0,1350,405,False,0,Arial,12,-2147483643,1)
+Gui.F_Main.txtSfx.defaultvalue("")
+Gui.F_Main.lblSeq.create(label,"Sequence:",True,1245,255,1,2340,135,True,0,Arial,12,-2147483633,0)
+Gui.F_Main.lblSeq.defaultvalue("")
+Gui.F_Main.txtSeq.create(textbox,"",True,1140,390,0,2310,405,False,0,Arial,12,-2147483643,1)
+Gui.F_Main.txtSeq.defaultvalue("")
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Variable.Global.sJob.Declare(String)
+Variable.Global.sSuffix.Declare(String)
+Variable.Global.sSeq.Declare(String)
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Hook 50781 GUI - PB Start JOB - PRE
+'Hook 15951 GUI - PB Start JOB WC - PRE
+'Hook 50500 GUI - OLS002 Populate Hook
+'Hook 50504 GUI - OLS002-PB Script 3 Hook
+'Hook 49754 GUI - OLS002-PRE WO SCAN Hook
+
+V.Local.bRet.Declare(Boolean,False)
+V.Local.sWorkOrder.Declare(String)
+
+F.Intrinsic.Control.If(V.Caller.Hook,=,"50500")
+	F.Intrinsic.Variable.PassedExists("MainFormView-windowsUIButtonPanel-4", V.Local.bRet)
+	F.Intrinsic.Control.If(V.Local.bRet)
+		V.Passed.MainFormView-windowsUIButtonPanel-4.Set("Seq Comm|~|Script 2|~|Script 1")
+	F.Intrinsic.Control.EndIf
+	
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,"50504")
+	F.Intrinsic.Control.CallSub(GetWorkOrderInfo)
+	F.Intrinsic.Control.CallSub(Subload)
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,"50781")
+	V.Local.sWorkOrder.Set(V.Passed.Job)
+	F.Intrinsic.String.Split(V.Local.sWorkOrder,"-",V.Local.sWorkOrder)
+	V.Global.sJob.Set(V.Local.sWorkOrder(0))
+	V.Global.sSuffix.Set(V.Local.sWorkOrder(1))
+	V.Global.sSeq.Set(V.Passed.Sequence)
+	F.Intrinsic.Control.CallSub(Subload)
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,"49754")
+	V.Global.sJob.Set(V.Passed.ScanJob)
+	V.Global.sSuffix.Set(V.Passed.ScanSuffix)
+	V.Global.sSeq.Set(V.Passed.ScanSeq)
+	F.Intrinsic.Control.CallSub(Subload)
+'F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,"15951")
+'	F.Intrinsic.Control.CallSub(Subload)
+F.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.GetWorkOrderInfo.Start
+V.Local.sBDF.Declare
+V.Local.iRet.Declare(Long)
+V.Local.i.Declare(Long)
+V.Local.sRet.Declare(String)
+V.Local.sWO.Declare(String)
+
+V.Local.sBDF.Set("MainFormView-gridViewOperations-bdf")
+F.Intrinsic.BDF.Load(V.Local.sBDF,V.Local.sBDF)
+F.Intrinsic.BDF.ReadRowCount(V.Local.sBDF,V.Local.iRet)
+F.Intrinsic.Control.If(V.Local.iRet,>,0)
+	F.Intrinsic.Math.Add(V.Local.iRet,-1,V.Local.iRet)
+	F.Intrinsic.Control.For(V.Local.i,0,V.Local.iRet,1)
+		F.Intrinsic.BDF.ReadRow(V.Local.sBDF,V.Local.i,V.Local.sRet)
+		F.Intrinsic.String.Split(V.Local.sRet,"|~|",V.Local.sRet)
+		F.Intrinsic.Control.If(V.Local.sRet(0),=,"True")
+			V.Local.sWO.Set(V.Local.sRet(2))
+			F.Intrinsic.String.Split(V.Local.sWO,"-",V.Local.sWO)
+			V.Global.sJob.Set(V.Local.sWO(0))
+			V.Global.sSuffix.Set(V.Local.sWO(1))
+			V.Global.sSeq.Set(V.Local.sRet(3))
+			F.Intrinsic.Control.ExitFor(V.Local.i)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.i)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+
+Program.Sub.GetWorkOrderInfo.End
+
+Program.Sub.f_main_unload.Start
+F.Intrinsic.Control.End
+
+Program.Sub.f_main_unload.End
+
+Program.Sub.subLoad.Start
+V.Local.sSeqEnd.Declare(String)
+V.Local.sSQL.Declare(String)
+V.Local.sSeqCancel.Declare(String)
+V.Local.iCounter.Declare(Long)
+V.Local.sCounter.Declare(String)
+V.Local.sComments.Declare(String)
+V.Local.iShow.Declare(Long,0)
+V.Local.sVer.Declare(String)
+V.Local.sYearVer.Declare(String)
+V.Local.sMinVer.Declare(String)
+F.Intrinsic.String.Left(V.Caller.GSSVersion,4,V.Local.sYearVer)
+F.Intrinsic.String.Right(V.Caller.GSSVersion,1,V.Local.sMinVer)
+F.Intrinsic.String.Build("{0}{1}",V.Local.sYearVer,V.Local.sMinVer,V.Local.sVer)
+
+
+F.Intrinsic.Control.If(V.Global.sJob.Trim,<>,"")
+F.Intrinsic.Control.AndIf(V.Global.sSeq,<>,"000000")
+	F.Intrinsic.Control.If(V.Local.sVer,<,"20162")
+		F.Intrinsic.Math.Add(V.Global.sSeq,999,V.Local.sSeqEnd)
+		F.Intrinsic.String.LPad(V.Local.sSeqEnd,"0",6,V.Local.sSeqEnd)
+		F.Intrinsic.Math.Add(V.Global.sSeq,1,V.Local.sSeqCancel)
+		F.Intrinsic.String.LPad(V.Local.sSeqEnd,"0",6,V.Local.sSeqCancel)
+		V.Local.sSQL.Set("Select SEQ,LMO,DESCRIPTION from JOB_OPERATIONS")
+		F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+		F.Intrinsic.String.Concat(V.Local.sSQL," where JOB='",V.Global.sJob,"' And SUFFIX='",V.Global.sSuffix,"' And SEQ BETWEEN '",V.Global.sSeq,"' And '",V.Local.sSeqEnd,"' order by 1,2,3",V.Local.sSQL)
+		F.ODBC.Connection!conx.OpenRecordsetRO("rstChk",V.Local.sSql)
+		F.Intrinsic.Control.If(V.ODBC.conx!rstChk.EOF,=,False)
+		F.Intrinsic.Control.AndIf(V.ODBC.conx!rstChk.FieldVal!LMO,=,"L")
+			F.Intrinsic.String.ConcatEOL(V.ODBC.conx!rstChk.FieldVal!DESCRIPTION,V.Local.sComments)
+			V.Local.iCounter.Set(V.Global.sSeq)
+			F.ODBC.conx!rstChk.MoveNext
+			F.Intrinsic.Control.DoUntil(V.ODBC.conx!rstChk.EOF,=,True)
+				F.Intrinsic.Math.Add(V.Local.iCounter,1,V.Local.iCounter)
+				F.Intrinsic.String.LPad(V.Local.iCounter,"0",6,V.Local.sCounter)
+				F.Intrinsic.Control.If(V.ODBC.conx!rstChk.FieldVal!SEQ,=,V.Local.sCounter)
+				F.Intrinsic.Control.AndIf(V.ODBC.conx!rstChk.FieldVal!LMO,=,"C")
+					V.Local.iShow.Set(1)
+					F.Intrinsic.String.Concat(V.Local.sComments,V.ODBC.conx!rstChk.FieldVal!DESCRIPTION,V.Local.sComments)
+					F.Intrinsic.String.ConcatEOL(V.Local.sComments,V.Local.sComments)
+				F.Intrinsic.Control.Else
+					F.Intrinsic.Control.ExitDo
+				F.Intrinsic.Control.EndIf
+			F.ODBC.conx!rstChk.MoveNext
+			F.Intrinsic.Control.Loop
+		F.Intrinsic.Control.EndIf
+		F.ODBC.conx!rstChk.Close
+		F.ODBC.Connection!conx.Close	
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("select TEXT from WO_SEQ_COMMENTS WHERE WO='{0}' AND WO_SUFFIX='{1}' AND WO_SEQ='{2}'",V.Global.sJob,V.Global.sSuffix,V.Global.sSeq,V.Local.sSQL)
+		F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+		F.ODBC.Connection!conx.OpenRecordsetRW("rstChk",V.Local.sSql)
+		F.Intrinsic.Control.If(V.ODBC.conx!rstChk.EOF,=,False)
+			V.Local.sComments.Set(V.ODBC.conx!rstChk.FieldVal!TEXT)
+			V.Local.iShow.Set(1)
+		F.Intrinsic.Control.EndIf
+		F.ODBC.conx!rstChk.Close
+		F.ODBC.Connection!conx.Close	
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.If(V.Local.iShow,=,1)
+		Gui.F_Main.txtJob.Text(V.Global.sJob)
+		Gui.F_Main.txtSfx.Text(V.Global.sSuffix)
+		Gui.F_Main.txtSeq.Text(V.Global.sSeq)
+		Gui.F_Main.txtComments.Text(V.Local.sComments)
+		Gui.F_Main..Show
+		Gui.F_Main..AlwaysOnTop(True)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Control.End
+
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.End
+
+F.Intrinsic.Control.EndIf
+
+Program.Sub.subLoad.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$RR$}$6/12/2015$}$False
+${$4$}$0$}$$}$0$}$-1$}$RRC$}$3/10/2017$}$Added the Functionality for 2016.2 with new comment table
+Program.Sub.Comments.End
